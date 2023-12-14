@@ -1,118 +1,105 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
   View,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  ImageBackground,
+  Image,
 } from 'react-native';
+import {GameEngine} from 'react-native-game-engine';
+import entities from './src/entities';
+import Physics from './physics';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const App = () => {
+  const [running, setRunning] = useState(false);
+  const [gameEngine, setGameEngine] = useState(null);
+  const [currentPoints, setCurrentPoints] = useState(0);
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  useEffect(() => {
+    setRunning(true);
+  }, []);
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
+    <View
+      style={{flex: 1, justifyContent: 'flex-end', backgroundColor: '#0381EF'}}>
+      <Text
+        style={{
+          textAlign: 'center',
+          fontSize: 40,
+          fontWeight: 'bold',
+          margin: 20,
+          position: 'absolute',
+          alignSelf: 'center',
+          top: 10,
+          zIndex: 99,
+          color: '#000',
+        }}>
+        {currentPoints}
+      </Text>
+      {/* <Image
+        source={require('./src/assets/images/bee_space.png')}
+        resizeMode="contain"
+        style={{alignSelf: 'flex-end', marginBottom: 20}}
+      /> */}
+      <GameEngine
+        ref={ref => {
+          setGameEngine(ref);
+        }}
+        systems={[Physics]}
+        entities={entities()}
+        running={running}
+        onEvent={e => {
+          switch (e.type) {
+            case 'game_over':
+              setRunning(false);
+              gameEngine.stop();
+              // setCurrentPoints(0);
+              break;
+            case 'new_point':
+              setCurrentPoints(currentPoints + 10);
+              break;
+          }
+        }}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }}></GameEngine>
+
+      {!running ? (
         <View
           style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'absolute',
+            alignSelf: 'center',
+            top: '50%',
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+          <TouchableOpacity
+            style={{
+              backgroundColor: 'black',
+              paddingHorizontal: 30,
+              paddingVertical: 10,
+            }}
+            onPress={() => {
+              setCurrentPoints(0);
+              setRunning(true);
+              gameEngine.swap(entities());
+            }}>
+            <Text style={{fontWeight: 'bold', color: 'white', fontSize: 30}}>
+              START GAME
+            </Text>
+          </TouchableOpacity>
         </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+      ) : null}
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+      <StatusBar hidden={true} />
+    </View>
+  );
+};
 
 export default App;
